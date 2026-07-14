@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ปุ่มการดูแล 4 ปุ่ม</title>
+<title>ผลประเมิน How's My Heart?</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; }
@@ -15,13 +15,32 @@
     display: flex;
     justify-content: center;
   }
-  .buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
     width: 100%;
-    max-width: 320px;
+    max-width: 340px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
   }
+  .title { font-size: 15px; font-weight: 600; margin: 0 0 4px; color: #222; }
+  .label-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .label-row i { font-size: 20px; }
+  .label-text { font-size: 17px; font-weight: 600; }
+  .score-line { font-size: 13px; color: #999; margin: 0 0 12px; }
+  .divider { border-top: 1px solid #eee; padding-top: 12px; margin-bottom: 12px; }
+  .body-text { font-size: 14px; color: #555; line-height: 1.6; margin: 0; }
+  .hotline-box {
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hotline-box i { font-size: 16px; }
+  .hotline-box span { font-size: 13px; }
+  .buttons { display: flex; flex-direction: column; gap: 10px; }
   .btn {
     display: flex;
     align-items: center;
@@ -37,27 +56,94 @@
     text-decoration: none;
   }
   .btn i { font-size: 18px; }
-  .btn.primary {
-    border: 1.5px solid transparent;
-    background: #A32D2D;
-    color: #ffffff;
-  }
+  .btn.primary { border: 1.5px solid transparent; }
+  .loading { font-size: 14px; color: #999; text-align: center; padding: 40px 0; }
 </style>
 </head>
 <body>
-  <div class="buttons">
-    <a href="#" class="btn">
-      <i class="ti ti-music"></i>ดนตรีบำบัด
-    </a>
-    <a href="#" class="btn">
-      <i class="ti ti-atom-2"></i>ปรับสมดุลสมอง
-    </a>
-    <a href="#" class="btn">
-      <i class="ti ti-message-circle"></i>อยากระบาย
-    </a>
-    <a href="tel:1323" class="btn primary">
-      <i class="ti ti-phone"></i>ติดต่อ 1323
-    </a>
+  <div class="card" id="card">
+    <p class="loading">กำลังโหลด...</p>
   </div>
+
+<script>
+const bands = [
+  { max: 4,  label: "ปกติ / ไม่มีภาวะซึมเศร้า", color: "#639922",
+    body: "คะแนนของคุณอยู่ในเกณฑ์ปกติ ดูแลสุขภาพใจต่อไปนะครับ/คะ", hotline: false,
+    actions: [
+      { label: "นอนหลับให้เพียงพอ", icon: "ti-moon" },
+      { label: "ออกกำลังกายสม่ำเสมอ", icon: "ti-run" }
+    ] },
+  { max: 9,  label: "เศร้าเล็กน้อย", color: "#BA7517",
+    body: "มีสัญญาณความเศร้าเล็กน้อย ลองพูดคุยกับคนใกล้ชิดดูนะครับ/คะ", hotline: false,
+    actions: [
+      { label: "เล่าให้คนที่ไว้ใจฟัง", icon: "ti-message-circle" },
+      { label: "ทำกิจกรรมที่ชอบ", icon: "ti-mood-smile" }
+    ] },
+  { max: 14, label: "เศร้าปานกลาง", color: "#D85A30",
+    body: "เราเป็นห่วงคุณ ลองปรึกษาครูแนะแนวหรือผู้ปกครองดูนะครับ/คะ", hotline: false,
+    actions: [
+      { label: "ปรึกษาครูแนะแนว", icon: "ti-school" },
+      { label: "ปรับสมดุลการนอน/กิน", icon: "ti-apple" }
+    ] },
+  { max: 19, label: "เศร้ารุนแรง", color: "#A32D2D",
+    body: "เราเป็นห่วงคุณมากๆ อยากให้ได้พูดคุยกับผู้เชี่ยวชาญโดยเร็ว", hotline: true,
+    actions: [
+      { label: "ดนตรีบำบัด", icon: "ti-music" },
+      { label: "ปรับสมดุลสมอง", icon: "ti-atom-2" },
+      { label: "ติดต่อ 1323", icon: "ti-phone", tel: "1323", primary: true }
+    ] },
+  { max: Infinity, label: "เศร้ารุนแรงค่อนข้างมาก", color: "#A32D2D",
+    body: "เราเป็นห่วงคุณมากๆ อยากให้ได้พูดคุยกับผู้เชี่ยวชาญโดยเร็ว ทางโรงเรียน/เจ้าหน้าที่จะติดต่อกลับไปเพื่อดูแลคุณ", hotline: true,
+    actions: [
+      { label: "ดนตรีบำบัด", icon: "ti-music" },
+      { label: "ปรับสมดุลสมอง", icon: "ti-atom-2" },
+      { label: "อยากระบาย", icon: "ti-message-circle" },
+      { label: "ติดต่อ 1323", icon: "ti-phone", tel: "1323", primary: true }
+    ] }
+];
+
+function bandFor(score) {
+  return bands.find(b => score <= b.max) || bands[bands.length - 1];
+}
+
+function render() {
+  const params = new URLSearchParams(window.location.search);
+  const score = Number(params.get("score")) || 0;
+  const name = params.get("name") ? decodeURIComponent(params.get("name")) : "";
+  const band = bandFor(score);
+
+  const hotlineHtml = band.hotline ? `
+    <div class="hotline-box" style="background:${band.color}18;">
+      <i class="ti ti-phone" style="color:${band.color}"></i>
+      <span style="color:${band.color}">สายด่วนสุขภาพจิต 1323 (โทรฟรีตลอด 24 ชม.)</span>
+    </div>` : "";
+
+  const buttonsHtml = band.actions.map(a => {
+    const href = a.tel ? `tel:${a.tel}` : "#";
+    const style = a.primary
+      ? `background:${band.color};color:#fff;border-color:${band.color};`
+      : "";
+    return `<a href="${href}" class="btn${a.primary ? " primary" : ""}" style="${style}">
+      <i class="ti ${a.icon}"></i>${a.label}
+    </a>`;
+  }).join("");
+
+  document.getElementById("card").innerHTML = `
+    <p class="title">ผลประเมิน How's My Heart?</p>
+    <div class="label-row">
+      <i class="ti ti-heart" style="color:${band.color}"></i>
+      <span class="label-text" style="color:${band.color}">${band.label}</span>
+    </div>
+    <p class="score-line">${name ? name + " &middot; " : ""}คะแนนรวม: ${score}/27</p>
+    <div class="divider">
+      <p class="body-text">${band.body}</p>
+    </div>
+    ${hotlineHtml}
+    <div class="buttons">${buttonsHtml}</div>
+  `;
+}
+
+render();
+</script>
 </body>
 </html>
