@@ -57,6 +57,7 @@
   }
   .btn i { font-size: 18px; }
   .btn.primary { border: 1.5px solid transparent; }
+  .btn.disabled { opacity: 0.45; pointer-events: none; }
   .loading { font-size: 14px; color: #999; text-align: center; padding: 40px 0; }
 </style>
 </head>
@@ -66,6 +67,14 @@
   </div>
 
 <script>
+/*
+  วิธีใส่ URL ให้แต่ละปุ่ม:
+  เพิ่ม key "url": "https://..." ในปุ่มที่ต้องการ เช่น
+    { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://open.spotify.com/playlist/xxxx" }
+
+  ปุ่มที่ยังไม่มี url และไม่มี tel จะกดไม่ได้ (แสดงจางลงเป็น disabled)
+  แทนที่จะเป็นลิงก์ค้าง href="#" เหมือนเดิม กันคนกดแล้วงง
+*/
 const bands = [
   { max: 4,  label: "ปกติ / ไม่มีภาวะซึมเศร้า", color: "#639922",
     body: "คะแนนของคุณอยู่ในเกณฑ์ปกติ ดูแลสุขภาพใจต่อไปนะครับ/คะ", hotline: false,
@@ -119,11 +128,14 @@ function render() {
     </div>` : "";
 
   const buttonsHtml = band.actions.map(a => {
-    const href = a.tel ? `tel:${a.tel}` : "#";
+    const hasLink = Boolean(a.tel || a.url);
+    const href = a.tel ? `tel:${a.tel}` : (a.url || "#");
+    const target = (!a.tel && a.url) ? ' target="_blank" rel="noopener"' : "";
     const style = a.primary
       ? `background:${band.color};color:#fff;border-color:${band.color};`
       : "";
-    return `<a href="${href}" class="btn${a.primary ? " primary" : ""}" style="${style}">
+    const classes = `btn${a.primary ? " primary" : ""}${hasLink ? "" : " disabled"}`;
+    return `<a href="${href}"${target} class="${classes}" style="${style}">
       <i class="ti ${a.icon}"></i>${a.label}
     </a>`;
   }).join("");
