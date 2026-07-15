@@ -91,22 +91,20 @@ const bands = [
   { max: 14, label: "เศร้าปานกลาง", color: "#D85A30",
     body: "เราเป็นห่วงคุณ ลองปรึกษาครูแนะแนวหรือผู้ปกครองดูนะครับ/คะ", hotline: false,
     actions: [
-      { label: "ปรับสมดุลการนอน/กิน", icon: "ti-apple" },
-      { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://drive.google.com/file/d/1A90D5a8S_PBeSxdMR5sbZmvigF8n2xt9/view?usp=sharing" },
-      { label: "ปรับสมดุลสมอง", icon: "ti-atom-2", url: "https://drive.google.com/file/d/1Iz7PlJqJ_ULdAlUi895S6K0xJz2tKcX4/view?usp=sharing" }
+      { label: "ปรึกษาครูแนะแนว", icon: "ti-school" },
+      { label: "ปรับสมดุลการนอน/กิน", icon: "ti-apple" }
     ] },
   { max: 19, label: "เศร้ารุนแรง", color: "#A32D2D",
     body: "เราเป็นห่วงคุณมากๆ อยากให้ได้พูดคุยกับผู้เชี่ยวชาญโดยเร็ว", hotline: true,
     actions: [
-      { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://drive.google.com/file/d/1A90D5a8S_PBeSxdMR5sbZmvigF8n2xt9/view?usp=sharing" },
+      { label: "ดนตรีบำบัด", icon: "ti-music" },
       { label: "ปรับสมดุลสมอง", icon: "ti-atom-2", url: "https://drive.google.com/file/d/1Iz7PlJqJ_ULdAlUi895S6K0xJz2tKcX4/view?usp=sharing" },
-     { label: "อยากระบาย", icon: "ti-message-circle" },
       { label: "ติดต่อ 1323", icon: "ti-phone", tel: "1323", primary: true }
     ] },
   { max: Infinity, label: "เศร้ารุนแรงค่อนข้างมาก", color: "#A32D2D",
     body: "เราเป็นห่วงคุณมากๆ อยากให้ได้พูดคุยกับผู้เชี่ยวชาญโดยเร็ว ทางโรงเรียน/เจ้าหน้าที่จะติดต่อกลับไปเพื่อดูแลคุณ", hotline: true,
     actions: [
-      { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://drive.google.com/file/d/1A90D5a8S_PBeSxdMR5sbZmvigF8n2xt9/view?usp=sharing" },
+      { label: "ดนตรีบำบัด", icon: "ti-music" },
       { label: "ปรับสมดุลสมอง", icon: "ti-atom-2", url: "https://drive.google.com/file/d/1Iz7PlJqJ_ULdAlUi895S6K0xJz2tKcX4/view?usp=sharing" },
       { label: "อยากระบาย", icon: "ti-message-circle" },
       { label: "ติดต่อ 1323", icon: "ti-phone", tel: "1323", primary: true }
@@ -117,24 +115,14 @@ function bandFor(score) {
   return bands.find(b => score <= b.max) || bands[bands.length - 1];
 }
 
-function render() {
-  const params = new URLSearchParams(window.location.search);
-  let score = 0;
-  let name = "";
-  if (params.get("d")) {
-    // รูปแบบใหม่: พารามิเตอร์ตัวเดียว d = base64("คะแนน|ชื่อ")
-    try {
-      const decoded = atob(decodeURIComponent(params.get("d")));
-      const sepIndex = decoded.indexOf("|");
-      score = Number(decoded.slice(0, sepIndex)) || 0;
-      name = decoded.slice(sepIndex + 1) || "";
-    } catch (e) {
-      score = 0; name = "";
-    }
-  } else {
-    // รูปแบบเดิม: ?score=..&name=.. (ยังใช้ได้เผื่อลิงก์เก่า)
-    score = Number(params.get("score")) || 0;
-    name = params.get("name") ? decodeURIComponent(params.get("name")) : "";
+// ตั้งค่า URL ของ Google Apps Script Web App ที่ deploy ไว้ (ลงท้ายด้วย /exec)
+const APPS_SCRIPT_URL = "PUT_APPS_SCRIPT_WEB_APP_URL_HERE";
+
+function paint(score, name, errorMsg) {
+  const card = document.getElementById("card");
+  if (errorMsg) {
+    card.innerHTML = `<p class="loading">${errorMsg}</p>`;
+    return;
   }
   const band = bandFor(score);
 
@@ -157,7 +145,7 @@ function render() {
     </a>`;
   }).join("");
 
-  document.getElementById("card").innerHTML = `
+  card.innerHTML = `
     <p class="title">ผลประเมิน How's My Heart?</p>
     <div class="label-row">
       <i class="ti ti-heart" style="color:${band.color}"></i>
@@ -170,6 +158,59 @@ function render() {
     ${hotlineHtml}
     <div class="buttons">${buttonsHtml}</div>
   `;
+}
+
+function loadByToken(token) {
+  const cbName = "phqaCb_" + Date.now();
+  const script = document.createElement("script");
+  window[cbName] = function (data) {
+    if (data.error === "not_found") {
+      paint(0, "", "ไม่พบข้อมูล ลิงก์นี้อาจไม่ถูกต้อง");
+    } else if (data.error === "expired") {
+      paint(0, "", "ลิงก์นี้หมดอายุแล้ว กรุณาติดต่อเจ้าหน้าที่");
+    } else if (data.error) {
+      paint(0, "", "เกิดข้อผิดพลาด ไม่สามารถโหลดข้อมูลได้");
+    } else {
+      paint(Number(data.score) || 0, data.name || "", null);
+    }
+    delete window[cbName];
+    script.remove();
+  };
+  script.onerror = function () {
+    paint(0, "", "เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่");
+  };
+  script.src = APPS_SCRIPT_URL + "?t=" + encodeURIComponent(token) + "&callback=" + cbName;
+  document.body.appendChild(script);
+}
+
+function render() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get("t")) {
+    // รูปแบบใหม่ (แนะนำ): ?t=token — โหลดข้อมูลจริงจากหลังบ้านผ่าน token
+    // ไม่มีคะแนน/ชื่อโผล่ใน URL เลย ใครเดา token ไม่ได้ก็เข้าไม่ถึงข้อมูล
+    loadByToken(params.get("t"));
+    return;
+  }
+
+  let score = 0;
+  let name = "";
+  if (params.get("d")) {
+    // รูปแบบเก่า: พารามิเตอร์ตัวเดียว d = base64("คะแนน|ชื่อ")
+    try {
+      const decoded = atob(decodeURIComponent(params.get("d")));
+      const sepIndex = decoded.indexOf("|");
+      score = Number(decoded.slice(0, sepIndex)) || 0;
+      name = decoded.slice(sepIndex + 1) || "";
+    } catch (e) {
+      score = 0; name = "";
+    }
+  } else {
+    // รูปแบบเก่าสุด: ?score=..&name=..
+    score = Number(params.get("score")) || 0;
+    name = params.get("name") ? decodeURIComponent(params.get("name")) : "";
+  }
+  paint(score, name, null);
 }
 
 render();
