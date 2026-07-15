@@ -8,62 +8,173 @@
 <style>
   * { box-sizing: border-box; }
   body {
-    font-family: -apple-system, "Segoe UI", "Noto Sans Thai", sans-serif;
-    background: #f0f0f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans Thai", sans-serif;
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
     margin: 0;
-    padding: 24px 12px;
+    padding: 40px 16px;
     display: flex;
     justify-content: center;
+    align-items: center;
+    min-height: 100vh;
   }
   .card {
     background: #ffffff;
-    border-radius: 16px;
-    padding: 20px;
+    border-radius: 24px;
+    padding: 28px 24px;
     width: 100%;
-    max-width: 340px;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    max-width: 360px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    animation: fadeIn 0.4s ease-out;
   }
-  .title { font-size: 15px; font-weight: 600; margin: 0 0 4px; color: #222; }
-  .label-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
-  .label-row i { font-size: 20px; }
-  .label-text { font-size: 17px; font-weight: 600; }
-  .score-line { font-size: 13px; color: #999; margin: 0 0 12px; }
-  .divider { border-top: 1px solid #eee; padding-top: 12px; margin-bottom: 12px; }
-  .body-text { font-size: 14px; color: #555; line-height: 1.6; margin: 0; }
-  .hotline-box {
-    border-radius: 8px;
-    padding: 8px 12px;
-    margin-bottom: 16px;
-    display: flex;
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .title-container {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin: 0 0 12px;
+  }
+  .status-badge {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    padding: 10px 18px;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
   }
-  .hotline-box i { font-size: 16px; }
-  .hotline-box span { font-size: 13px; }
+  .status-badge i {
+    font-size: 20px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  .user-info {
+    font-size: 14px;
+    color: #64748b;
+    margin: 6px 0 0;
+    font-weight: 500;
+  }
+  .score-section {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid #f1f5f9;
+  }
+  .score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .score-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+  }
+  .score-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  .progress-container {
+    background: #e2e8f0;
+    border-radius: 8px;
+    height: 8px;
+    width: 100%;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    border-radius: 8px;
+    transition: width 0.5s ease-in-out;
+  }
+  .body-box {
+    border-left: 4px solid #eee;
+    padding: 2px 0 2px 14px;
+    margin: 0 0 20px 0;
+  }
+  .body-text {
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.6;
+    margin: 0;
+    font-weight: 500;
+  }
+  .hotline-box {
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid transparent;
+  }
+  .hotline-box i { font-size: 18px; flex-shrink: 0; }
+  .hotline-box span { font-size: 13px; font-weight: 600; line-height: 1.4; }
   .buttons { display: flex; flex-direction: column; gap: 10px; }
   .btn {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1.5px solid #1a1a1a;
+    padding: 13px 16px;
+    border-radius: 14px;
+    border: 1.5px solid #e2e8f0;
     background: #fff;
-    color: #1a1a1a;
-    font-size: 15px;
-    font-weight: 500;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
     text-decoration: none;
+    transition: all 0.2s ease;
   }
   .btn i { font-size: 18px; }
-  .btn.primary { border: 1.5px solid transparent; }
-  .btn.disabled { opacity: 0.45; pointer-events: none; }
-  .loading { font-size: 14px; color: #999; text-align: center; padding: 40px 0; }
+  .btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+  .btn.primary {
+    border: 1.5px solid transparent;
+  }
+  .btn.primary:hover {
+    opacity: 0.95;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .btn.disabled {
+    opacity: 0.4;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    pointer-events: none;
+    box-shadow: none;
+  }
+  .loading {
+    font-size: 14px;
+    color: #64748b;
+    text-align: center;
+    padding: 40px 0;
+    font-weight: 500;
+  }
 </style>
 </head>
 <body>
   <div class="card" id="card">
-    <p class="loading">กำลังโหลด...</p>
+    <p class="loading">กำลังโหลดข้อมูลสุขภาพใจ...</p>
   </div>
 
 <script>
@@ -128,9 +239,9 @@ function paint(score, name, errorMsg) {
   const band = bandFor(score);
 
   const hotlineHtml = band.hotline ? `
-    <div class="hotline-box" style="background:${band.color}18;">
+    <div class="hotline-box" style="background:${band.color}10; border-color:${band.color}30;">
       <i class="ti ti-phone" style="color:${band.color}"></i>
-      <span style="color:${band.color}">สายด่วนสุขภาพจิต 1323 (โทรฟรีตลอด 24 ชม.)</span>
+      <span style="color:${band.color}">สายด่วนสุขภาพจิต 1323<br><span style="font-weight:400; font-size:12px; opacity:0.8;">(โทรฟรีตลอด 24 ชม.)</span></span>
     </div>` : "";
 
   const buttonsHtml = band.actions.map(a => {
@@ -138,24 +249,38 @@ function paint(score, name, errorMsg) {
     const href = a.tel ? `tel:${a.tel}` : (a.url || "#");
     const target = (!a.tel && a.url) ? ' target="_blank" rel="noopener"' : "";
     const style = a.primary
-      ? `background:${band.color};color:#fff;border-color:${band.color};`
+      ? `background:${band.color};color:#fff;border-color:${band.color};box-shadow:0 4px 12px ${band.color}30;`
       : "";
     const classes = `btn${a.primary ? " primary" : ""}${hasLink ? "" : " disabled"}`;
     return `<a href="${href}"${target} class="${classes}" style="${style}">
-      <i class="ti ${a.icon}"></i>${a.label}
+      <i class="ti ${a.icon}"></i><span>${a.label}</span>
     </a>`;
   }).join("");
 
   card.innerHTML = `
-    <p class="title">ผลประเมิน How's My Heart?</p>
-    <div class="label-row">
-      <i class="ti ti-heart" style="color:${band.color}"></i>
-      <span class="label-text" style="color:${band.color}">${band.label}</span>
+    <div class="title-container">
+      <p class="title">ผลประเมิน How's My Heart?</p>
+      <div class="status-badge" style="background:${band.color}15; color:${band.color};">
+        <i class="ti ti-heart-filled"></i>
+        <span>${band.label}</span>
+      </div>
+      ${name ? `<p class="user-info">คุณ ${name}</p>` : ""}
     </div>
-    <p class="score-line">${name ? name + " &middot; " : ""}คะแนนรวม: ${score}/27</p>
-    <div class="divider">
+
+    <div class="score-section">
+      <div class="score-header">
+        <span class="score-title">คะแนนรวมของคุณ</span>
+        <span class="score-value">${score} <span style="font-size:12px; color:#94a3b8; font-weight:500;">/ 27</span></span>
+      </div>
+      <div class="progress-container">
+        <div class="progress-bar" style="width: ${(score / 27) * 100}%; background: ${band.color};"></div>
+      </div>
+    </div>
+
+    <div class="body-box" style="border-color: ${band.color};">
       <p class="body-text">${band.body}</p>
     </div>
+
     ${hotlineHtml}
     <div class="buttons">${buttonsHtml}</div>
   `;
@@ -189,7 +314,6 @@ function render() {
 
   if (params.get("t")) {
     // รูปแบบใหม่ (แนะนำ): ?t=token — โหลดข้อมูลจริงจากหลังบ้านผ่าน token
-    // ไม่มีคะแนน/ชื่อโผล่ใน URL เลย ใครเดา token ไม่ได้ก็เข้าไม่ถึงข้อมูล
     loadByToken(params.get("t"));
     return;
   }
