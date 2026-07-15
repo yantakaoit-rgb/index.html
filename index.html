@@ -97,15 +97,14 @@ const bands = [
   { max: 19, label: "เศร้ารุนแรง", color: "#A32D2D",
     body: "เราเป็นห่วงคุณมากๆ อยากให้ได้พูดคุยกับผู้เชี่ยวชาญโดยเร็ว", hotline: true,
     actions: [
-      { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://drive.google.com/file/d/1A90D5a8S_PBeSxdMR5sbZmvigF8n2xt9/view?usp=sharing" },
+      { label: "ดนตรีบำบัด", icon: "ti-music" },
       { label: "ปรับสมดุลสมอง", icon: "ti-atom-2", url: "https://drive.google.com/file/d/1Iz7PlJqJ_ULdAlUi895S6K0xJz2tKcX4/view?usp=sharing" },
-      { label: "อยากระบาย", icon: "ti-message-circle" },
       { label: "ติดต่อ 1323", icon: "ti-phone", tel: "1323", primary: true }
     ] },
   { max: Infinity, label: "เศร้ารุนแรงค่อนข้างมาก", color: "#A32D2D",
-    body: "เราเป็นห่วงคุณมากๆ อยากให้ได้พูดคุยกับผู้เชี่ยวชาญโดยเร็ว ทางเจ้าหน้าที่จะติดต่อกลับไปเพื่อดูแลคุณ", hotline: true,
+    body: "เราเป็นห่วงคุณมากๆ อยากให้ได้พูดคุยกับผู้เชี่ยวชาญโดยเร็ว ทางโรงเรียน/เจ้าหน้าที่จะติดต่อกลับไปเพื่อดูแลคุณ", hotline: true,
     actions: [
-      { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://drive.google.com/file/d/1A90D5a8S_PBeSxdMR5sbZmvigF8n2xt9/view?usp=sharing"  },
+      { label: "ดนตรีบำบัด", icon: "ti-music" },
       { label: "ปรับสมดุลสมอง", icon: "ti-atom-2", url: "https://drive.google.com/file/d/1Iz7PlJqJ_ULdAlUi895S6K0xJz2tKcX4/view?usp=sharing" },
       { label: "อยากระบาย", icon: "ti-message-circle" },
       { label: "ติดต่อ 1323", icon: "ti-phone", tel: "1323", primary: true }
@@ -118,8 +117,23 @@ function bandFor(score) {
 
 function render() {
   const params = new URLSearchParams(window.location.search);
-  const score = Number(params.get("score")) || 0;
-  const name = params.get("name") ? decodeURIComponent(params.get("name")) : "";
+  let score = 0;
+  let name = "";
+  if (params.get("d")) {
+    // รูปแบบใหม่: พารามิเตอร์ตัวเดียว d = base64("คะแนน|ชื่อ")
+    try {
+      const decoded = atob(decodeURIComponent(params.get("d")));
+      const sepIndex = decoded.indexOf("|");
+      score = Number(decoded.slice(0, sepIndex)) || 0;
+      name = decoded.slice(sepIndex + 1) || "";
+    } catch (e) {
+      score = 0; name = "";
+    }
+  } else {
+    // รูปแบบเดิม: ?score=..&name=.. (ยังใช้ได้เผื่อลิงก์เก่า)
+    score = Number(params.get("score")) || 0;
+    name = params.get("name") ? decodeURIComponent(params.get("name")) : "";
+  }
   const band = bandFor(score);
 
   const hotlineHtml = band.hotline ? `
