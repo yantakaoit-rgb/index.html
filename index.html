@@ -184,7 +184,6 @@
     { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://open.spotify.com/playlist/xxxx" }
 
   ปุ่มที่ยังไม่มี url และไม่มี tel จะกดไม่ได้ (แสดงจางลงเป็น disabled)
-  แทนที่จะเป็นลิงก์ค้าง href="#" เหมือนเดิม กันคนกดแล้วงง
 */
 const bands = [
   { max: 4,  label: "ปกติ / ไม่มีภาวะซึมเศร้า", color: "#639922",
@@ -228,7 +227,7 @@ function bandFor(score) {
 }
 
 // ตั้งค่า URL ของ Google Apps Script Web App ที่ deploy ไว้ (ลงท้ายด้วย /exec)
-const APPS_SCRIPT_URL = "PUT_APPS_SCRIPT_WEB_APP_URL_HERE";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrSOKcjyByLMKX380rw_-mwWsLvIosbvZfqk6PH670yBGsi_guhzj8qr4nraodJLj6ZQ/exec";
 
 function paint(score, name, errorMsg) {
   const card = document.getElementById("card");
@@ -313,7 +312,6 @@ function render() {
   const params = new URLSearchParams(window.location.search);
 
   if (params.get("t")) {
-    // รูปแบบใหม่ (แนะนำ): ?t=token — โหลดข้อมูลจริงจากหลังบ้านผ่าน token
     loadByToken(params.get("t"));
     return;
   }
@@ -321,7 +319,6 @@ function render() {
   let score = 0;
   let name = "";
   if (params.get("d")) {
-    // รูปแบบเก่า: พารามิเตอร์ตัวเดียว d = base64("คะแนน|ชื่อ")
     try {
       const decoded = atob(decodeURIComponent(params.get("d")));
       const sepIndex = decoded.indexOf("|");
@@ -331,7 +328,6 @@ function render() {
       score = 0; name = "";
     }
   } else {
-    // รูปแบบเก่าสุด: ?score=..&name=..
     score = Number(params.get("score")) || 0;
     name = params.get("name") ? decodeURIComponent(params.get("name")) : "";
   }
