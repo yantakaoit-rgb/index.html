@@ -170,6 +170,55 @@
     padding: 40px 0;
     font-weight: 500;
   }
+  .verify-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 16px;
+  }
+  .verify-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: center;
+    margin: 0 0 6px;
+  }
+  .verify-desc {
+    font-size: 13px;
+    color: #64748b;
+    text-align: center;
+    line-height: 1.5;
+    margin: 0 0 20px;
+  }
+  .verify-input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1.5px solid #e2e8f0;
+    font-size: 20px;
+    letter-spacing: 0.3em;
+    text-align: center;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 12px;
+  }
+  .verify-input:focus {
+    outline: none;
+    border-color: #2563eb;
+  }
+  .verify-error {
+    font-size: 13px;
+    color: #A32D2D;
+    text-align: center;
+    margin: 0 0 12px;
+    min-height: 16px;
+  }
 </style>
 </head>
 <body>
@@ -184,6 +233,7 @@
     { label: "ดนตรีบำบัด", icon: "ti-music", url: "https://open.spotify.com/playlist/xxxx" }
 
   ปุ่มที่ยังไม่มี url และไม่มี tel จะกดไม่ได้ (แสดงจางลงเป็น disabled)
+  แทนที่จะเป็นลิงก์ค้าง href="#" เหมือนเดิม กันคนกดแล้วงง
 */
 const bands = [
   { max: 4,  label: "ปกติ / ไม่มีภาวะซึมเศร้า", color: "#639922",
@@ -227,7 +277,7 @@ function bandFor(score) {
 }
 
 // ตั้งค่า URL ของ Google Apps Script Web App ที่ deploy ไว้ (ลงท้ายด้วย /exec)
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrSOKcjyByLMKX380rw_-mwWsLvIosbvZfqk6PH670yBGsi_guhzj8qr4nraodJLj6ZQ/exec";
+const APPS_SCRIPT_URL = "PUT_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 function paint(score, name, errorMsg) {
   const card = document.getElementById("card");
@@ -285,40 +335,96 @@ function paint(score, name, errorMsg) {
   `;
 }
 
-function loadByToken(token) {
+// เรียก Apps Script พร้อมแนบ verify (เลขท้ายเบอร์โทร 4 ตัว) เสมอ
+// ต่อให้รู้ token ก็ดูข้อมูลไม่ได้ถ้ากรอกเลขท้ายเบอร์โทรไม่ตรง — กันแชร์ลิงก์แล้วคนอื่นเปิดดูได้
+function fetchTokenData(token, verify, onResult) {
   const cbName = "phqaCb_" + Date.now();
   const script = document.createElement("script");
   window[cbName] = function (data) {
-    if (data.error === "not_found") {
-      paint(0, "", "ไม่พบข้อมูล ลิงก์นี้อาจไม่ถูกต้อง");
-    } else if (data.error === "expired") {
-      paint(0, "", "ลิงก์นี้หมดอายุแล้ว กรุณาติดต่อเจ้าหน้าที่");
-    } else if (data.error) {
-      paint(0, "", "เกิดข้อผิดพลาด ไม่สามารถโหลดข้อมูลได้");
-    } else {
-      paint(Number(data.score) || 0, data.name || "", null);
-    }
     delete window[cbName];
     script.remove();
+    onResult(data);
   };
   script.onerror = function () {
-    paint(0, "", "เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่");
+    delete window[cbName];
+    script.remove();
+    onResult({ error: "network_error" });
   };
-  script.src = APPS_SCRIPT_URL + "?t=" + encodeURIComponent(token) + "&callback=" + cbName;
+  script.src = APPS_SCRIPT_URL + "?t=" + encodeURIComponent(token) +
+    "&verify=" + encodeURIComponent(verify) + "&callback=" + cbName;
   document.body.appendChild(script);
+}
+
+function showVerifyGate(token) {
+  const card = document.getElementById("card");
+  card.innerHTML = `
+    <div class="verify-icon"><i class="ti ti-shield-lock"></i></div>
+    <p class="verify-title">ยืนยันตัวตนก่อนดูผลประเมิน</p>
+    <p class="verify-desc">เพื่อความเป็นส่วนตัว กรุณากรอก<strong>เบอร์โทร 4 ตัวท้าย</strong>ที่ลงทะเบียนไว้</p>
+    <input type="tel" id="verifyInput" class="verify-input" placeholder="0000" maxlength="4" inputmode="numeric" autocomplete="off" />
+    <p class="verify-error" id="verifyError"></p>
+    <div class="buttons">
+      <a href="#" id="verifyBtn" class="btn primary" style="background:#2563eb;border-color:#2563eb;color:#fff;">
+        <i class="ti ti-lock-open"></i><span>ยืนยันตัวตน</span>
+      </a>
+    </div>
+  `;
+
+  const input = document.getElementById("verifyInput");
+  const btn = document.getElementById("verifyBtn");
+  const errEl = document.getElementById("verifyError");
+  input.focus();
+
+  function submit() {
+    const val = input.value.replace(/\D/g, "");
+    if (val.length !== 4) {
+      errEl.textContent = "กรุณากรอกตัวเลข 4 หลัก";
+      return;
+    }
+    errEl.textContent = "";
+    btn.style.opacity = "0.6";
+    btn.style.pointerEvents = "none";
+
+    fetchTokenData(token, val, function (data) {
+      if (data.error === "verify_failed") {
+        errEl.textContent = "เลขท้ายเบอร์โทรไม่ถูกต้อง ลองใหม่อีกครั้ง";
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
+        input.value = "";
+        input.focus();
+      } else if (data.error === "too_many_attempts") {
+        paint(0, "", "กรอกผิดหลายครั้งเกินไป กรุณาลองใหม่ภายหลัง หรือติดต่อเจ้าหน้าที่");
+      } else if (data.error === "not_found") {
+        paint(0, "", "ไม่พบข้อมูล ลิงก์นี้อาจไม่ถูกต้อง");
+      } else if (data.error === "expired") {
+        paint(0, "", "ลิงก์นี้หมดอายุแล้ว กรุณาติดต่อเจ้าหน้าที่");
+      } else if (data.error) {
+        errEl.textContent = "เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่";
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
+      } else {
+        paint(Number(data.score) || 0, data.name || "", null);
+      }
+    });
+  }
+
+  btn.addEventListener("click", function (e) { e.preventDefault(); submit(); });
+  input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); submit(); } });
 }
 
 function render() {
   const params = new URLSearchParams(window.location.search);
 
   if (params.get("t")) {
-    loadByToken(params.get("t"));
+    // รูปแบบใหม่ (แนะนำ): ?t=token — ต้องยืนยันตัวตน (เลขท้ายเบอร์โทร) ก่อนถึงจะเห็นข้อมูลจริง
+    showVerifyGate(params.get("t"));
     return;
   }
 
   let score = 0;
   let name = "";
   if (params.get("d")) {
+    // รูปแบบเก่า: พารามิเตอร์ตัวเดียว d = base64("คะแนน|ชื่อ")
     try {
       const decoded = atob(decodeURIComponent(params.get("d")));
       const sepIndex = decoded.indexOf("|");
@@ -328,6 +434,7 @@ function render() {
       score = 0; name = "";
     }
   } else {
+    // รูปแบบเก่าสุด: ?score=..&name=..
     score = Number(params.get("score")) || 0;
     name = params.get("name") ? decodeURIComponent(params.get("name")) : "";
   }
